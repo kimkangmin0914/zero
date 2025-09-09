@@ -8,6 +8,29 @@ import numpy as np
 import streamlit as st
 from ortools.sat.python import cp_model
 
+def render_gift(team_no: int, names_line: str, title_px: int, names_px: int):
+    chips = [n.strip() for n in names_line.split('/') if n.strip()]
+    gift_html = [
+        '<div style="background: rgba(255,255,255,0.78); border:1px solid rgba(46,90,136,0.10);'
+        ' border-radius: 20px; box-shadow: 0 10px 26px rgba(46,90,136,0.10); padding: 18px 18px 14px; margin-bottom: 14px;">',
+        '  <div style="display:flex; justify-content:center; align-items:center; gap:8px; margin-bottom: 10px;">',
+        '    <span style="width:10px;height:10px;border-radius:999px;background:#3a7ca5;box-shadow:0 0 0 3px rgba(58,124,165,0.15) inset;"></span>',
+        f'    <div style="font-weight:800;color:#2e5a88;font-size:{title_px}px;">팀 {team_no}</div>',
+        '    <span style="width:10px;height:10px;border-radius:999px;background:#3a7ca5;box-shadow:0 0 0 3px rgba(58,124,165,0.15) inset;"></span>',
+        '  </div>',
+        '  <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">',
+    ]
+    for c in chips:
+        gift_html.append(
+            f'    <span style="background:#fff;border:1px solid rgba(46,90,136,0.15);border-radius:12px;'
+            f'padding:6px 10px;font-weight:600;color:#1b365d;box-shadow:0 4px 10px rgba(46,90,136,0.08);'
+            f'font-size:{names_px}px;">{c}</span>'
+        )
+    gift_html.append('  </div>')
+    gift_html.append('</div>')
+    return '\n'.join(gift_html)
+
+
 # ------------------------------
 # Page setup + CSS
 # ------------------------------
@@ -268,7 +291,6 @@ def solve_assignment(df, seed=0, time_limit=10, max_per_church=4):
 # ------------------------------
 # UI
 # ------------------------------
-st.title("교회 매칭 프로그램 (팀 번호 + 이름만)")
 
 with st.sidebar:
     st.header("설정")
@@ -380,13 +402,14 @@ if st.session_state.get("assignment_ready", False):
     st.markdown("</div>", unsafe_allow_html=True)
 
     if st.session_state.final_view:
-        st.markdown("<div class='team-title'>최종 결과</div>", unsafe_allow_html=True)
-        for g, names_line_tmp in enumerate(st.session_state.names_per_team, start=1):
-            st.markdown(f"<div class='names-line'><b>팀 {g}</b> — {names_line_tmp}</div>", unsafe_allow_html=True)
+        st.markdown('<div style="text-align:center;font-weight:800;color:#2e5a88;margin:10px 0 8px 0;">최종 결과</div>', unsafe_allow_html=True)
+        cols = st.columns(2)
+        for idx, names_line_tmp in enumerate(st.session_state.names_per_team, start=1):
+            with cols[(idx-1) % 2]:
+                st.markdown(render_gift(idx, names_line_tmp, title_px, names_px), unsafe_allow_html=True)
     else:
         cur_idx = st.session_state.team_idx
-        st.markdown(f"<div class='team-title'>팀 {cur_idx+1}</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='names-line'>{st.session_state.names_per_team[cur_idx]}</div>", unsafe_allow_html=True)
+        st.markdown(render_gift(cur_idx+1, st.session_state.names_per_team[cur_idx], title_px, names_px), unsafe_allow_html=True)
 
     # Download
     rows = []
